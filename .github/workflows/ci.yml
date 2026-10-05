@@ -1,0 +1,15 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install flake8 pyyaml
+      - run: flake8 app scripts loadgen --max-line-length 120 --extend-ignore=E401,E302,E305,E702
+      - name: Validate alert rules YAML
+        run: python -c "import yaml; yaml.safe_load(open('prometheus/alerts.yml'))"
+      - name: Build Docker image
+        run: docker build ./app

@@ -1,0 +1,33 @@
+services:
+  orders:
+    build: ./app
+    environment: {SERVICE_NAME: orders, ERROR_RATE: "0.03"}
+    ports: ["8001:8000"]
+    depends_on: [redis]
+  payments:
+    build: ./app
+    environment: {SERVICE_NAME: payments, ERROR_RATE: "0.10", MAX_DELAY: "0.6"}
+    ports: ["8002:8000"]
+    depends_on: [redis]
+  inventory:
+    build: ./app
+    environment: {SERVICE_NAME: inventory, ERROR_RATE: "0.01"}
+    ports: ["8003:8000"]
+    depends_on: [redis]
+  redis:
+    image: redis:7
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml
+    ports: ["9090:9090"]
+  grafana:
+    image: grafana/grafana:11.2.0
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+  loadgen:
+    build: ./loadgen
+    depends_on: [orders, payments, inventory]
